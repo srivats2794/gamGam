@@ -1,25 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SplashScreen from "@/components/SplashScreen";
+import { hasCompletedOnboarding } from "@/services/user.service";
 
 const Index = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const navigate = useNavigate();
+  const [ready, setReady] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
 
-  if (showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} />;
-  }
+  useEffect(() => {
+    hasCompletedOnboarding().then((done) => {
+      setOnboarded(done);
+      setReady(true);
+    });
+  }, []);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center px-8 max-w-md">
-        <h1 className="font-display text-4xl md:text-5xl font-bold text-primary mb-4">
-          mygrammie
-        </h1>
-        <p className="text-lg text-muted-foreground font-body">
-          Good health is a precious thing!
-        </p>
-      </div>
-    </div>
-  );
+  const handleSplashComplete = () => {
+    navigate(onboarded ? "/dashboard" : "/onboarding");
+  };
+
+  if (!ready) return null;
+
+  return <SplashScreen onComplete={handleSplashComplete} />;
 };
 
 export default Index;
