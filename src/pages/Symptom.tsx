@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { getRecommendations } from "@/services/recommendations.service";
 import { Recommendation, ConfidenceLevel } from "@/types/recommendation";
+import { ChatResult } from "@/types/chat";
+import PageHeader from "@/components/PageHeader";
+import ChatOverlay from "@/components/ChatOverlay";
 
 const CONFIDENCE_STYLES: Record<ConfidenceLevel, { label: string; className: string }> = {
   "research-backed": {
@@ -56,15 +58,12 @@ const RecommendationCard = ({ rec }: { rec: Recommendation }) => {
           >
             <div className="px-5 pb-5 border-t border-border/40 pt-4 space-y-3">
               <p className="font-body text-sm text-foreground/80 leading-relaxed">{rec.expandedDetail}</p>
-
               {rec.tradition && (
                 <p className="font-body text-xs text-muted-foreground">Tradition: {rec.tradition}</p>
               )}
-
               {rec.communitySignal && (
                 <p className="font-body text-xs text-foreground/60 italic">{rec.communitySignal}</p>
               )}
-
               {rec.researchLinks && rec.researchLinks.length > 0 && (
                 <div className="space-y-1">
                   {rec.researchLinks.map((link) => (
@@ -74,7 +73,6 @@ const RecommendationCard = ({ rec }: { rec: Recommendation }) => {
                   ))}
                 </div>
               )}
-
               {rec.pregnancySafetyNote && (
                 <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
                   <p className="font-body text-xs text-amber-800">{rec.pregnancySafetyNote}</p>
@@ -92,36 +90,39 @@ const Symptom = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState("");
 
-  const handleFindRemedies = async () => {
+  const handleSubmit = () => {
     if (!input.trim()) return;
-    setLoading(true);
-    // Phase 2: pass raw input to LLM service — it returns matched recommendations
-    // Phase 1: keyword match against mock data keys
-    const lower = input.toLowerCase();
-    const symptomKey = lower.includes("sleep") || lower.includes("insomnia") || lower.includes("awake") || lower.includes("rest")
-      ? "sleep-problems"
-      : "hot-flashes";
-    const recs = await getRecommendations(symptomKey);
-    setRecommendations(recs);
-    setLoading(false);
+    setPendingMessage(input.trim());
+    setOverlayOpen(true);
+  };
+
+  const handleChatComplete = (result: ChatResult) => {
+    setOverlayOpen(false);
+    if (result.context === "symptom") {
+      setRecommendations(result.recommendations);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-6 py-10 flex flex-col gap-6">
-
-        <button
-          onClick={() => recommendations ? setRecommendations(null) : navigate("/dashboard")}
-          className="self-start font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          ← Back
-        </button>
+        <PageHeader
+          showBack
+          showLogo
+          onBack={() => recommendations ? setRecommendations(null) : navigate("/dashboard")}
+        />
 
         <AnimatePresence mode="wait">
-
-          {/* Step 1 — free text input */}
           {!recommendations && (
             <motion.div
               key="input"
@@ -133,33 +134,33 @@ const Symptom = () => {
             >
               <div className="px-5 py-4 rounded-2xl bg-secondary/60 border border-border/40">
                 <p className="font-display text-lg italic text-foreground/80 leading-relaxed">
-                  "Tell me what's going on. In your own words — don't worry about getting it right."
+                  "Tell me what's going on. In your own words. Don't worry about getting it right."
                 </p>
               </div>
 
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="e.g. I've been waking up at 3am drenched in sweat and can't get back to sleep. I'm exhausted but my mind won't stop…"
                 rows={5}
                 className="w-full px-4 py-3 rounded-xl border border-border bg-card font-body text-sm text-foreground placeholder:text-muted-foreground/60 leading-relaxed resize-none focus:outline-none focus:border-primary/60 transition-colors"
               />
 
               <button
-                disabled={!input.trim() || loading}
-                onClick={handleFindRemedies}
+                disabled={!input.trim()}
+                onClick={handleSubmit}
                 className={`w-full py-3 rounded-xl font-body font-medium transition-all duration-200 ${
                   input.trim()
                     ? "bg-primary text-primary-foreground hover:opacity-90"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
               >
-                {loading ? "Finding remedies…" : "Find remedies"}
+                Find remedies
               </button>
             </motion.div>
           )}
 
-          {/* Step 2 — recommendations */}
           {recommendations && (
             <motion.div
               key="recommendations"
@@ -172,7 +173,7 @@ const Symptom = () => {
               {recommendations.length === 0 ? (
                 <div className="px-5 py-4 rounded-2xl bg-secondary/60 border border-border/40">
                   <p className="font-display text-lg italic text-foreground/80">
-                    "I don't have anything specific for that yet. Come back soon — I'm always learning."
+                    "I don't have anything specific for that yet. Come back soon. I'm always learning."
                   </p>
                 </div>
               ) : (
@@ -189,9 +190,16 @@ const Symptom = () => {
               )}
             </motion.div>
           )}
-
         </AnimatePresence>
       </div>
+
+      <ChatOverlay
+        isOpen={overlayOpen}
+        context="symptom"
+        initialMessage={pendingMessage}
+        onClose={() => setOverlayOpen(false)}
+        onComplete={handleChatComplete}
+      />
     </div>
   );
 };

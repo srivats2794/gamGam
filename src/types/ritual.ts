@@ -9,7 +9,10 @@ export interface RitualStep {
 export interface Ritual {
   id: string;
   profileId: string;
+  name: string;
   steps: RitualStep[];
   createdAt: string;
-  isActive: boolean;
+  hasCommitted: boolean;
+  wantsDailyReminder: boolean;
+  reminderTime?: string;
 }

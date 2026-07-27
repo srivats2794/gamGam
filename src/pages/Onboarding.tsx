@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { saveProfile } from "@/services/user.service";
+import { generateRitualsForProfile } from "@/services/ritual.service";
 import { UserProfile, LifeStage } from "@/types/user";
 
 const LIFE_STAGES: { value: LifeStage; label: string }[] = [
@@ -92,6 +93,7 @@ const Onboarding = () => {
       wantsDailyReminder: false,
     };
     await saveProfile(profile);
+    await generateRitualsForProfile(profile);
     navigate("/dashboard");
   };
 
@@ -117,7 +119,7 @@ const Onboarding = () => {
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.3 }}
             >
-              <GrammieQuote text="Before we begin — where are you in your journey right now?" />
+              <GrammieQuote text="Before we begin. Where are you in your journey right now?" />
               <div className="space-y-3">
                 {LIFE_STAGES.map((s) => (
                   <button
@@ -125,7 +127,7 @@ const Onboarding = () => {
                     onClick={() => setLifeStage(s.value)}
                     className={`w-full text-left px-5 py-4 rounded-xl border font-body transition-all duration-200 ${
                       lifeStage === s.value
-                        ? "border-primary bg-primary/8 text-primary font-medium"
+                        ? "border-primary bg-primary/10 text-primary font-medium"
                         : "border-border bg-card text-foreground hover:border-primary/40"
                     }`}
                   >
@@ -152,7 +154,7 @@ const Onboarding = () => {
                     onClick={() => toggleMulti(s.value, symptoms, setSymptoms)}
                     className={`text-left px-4 py-3 rounded-xl border font-body text-sm transition-all duration-200 ${
                       symptoms.includes(s.value)
-                        ? "border-primary bg-primary/8 text-primary font-medium"
+                        ? "border-primary bg-primary/10 text-primary font-medium"
                         : "border-border bg-card text-foreground hover:border-primary/40"
                     }`}
                   >
@@ -171,7 +173,7 @@ const Onboarding = () => {
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.3 }}
             >
-              <GrammieQuote text="Good to know. Now — anything I should keep in mind when I'm suggesting remedies?" />
+              <GrammieQuote text="Good to know. Anything I should keep in mind when I'm suggesting remedies?" />
               <div className="space-y-3">
                 {SENSITIVITIES.map((s) => (
                   <button
@@ -179,7 +181,7 @@ const Onboarding = () => {
                     onClick={() => toggleMulti(s.value, sensitivities, setSensitivities)}
                     className={`w-full text-left px-5 py-4 rounded-xl border font-body transition-all duration-200 ${
                       sensitivities.includes(s.value)
-                        ? "border-primary bg-primary/8 text-primary font-medium"
+                        ? "border-primary bg-primary/10 text-primary font-medium"
                         : "border-border bg-card text-foreground hover:border-primary/40"
                     }`}
                   >
@@ -206,7 +208,7 @@ const Onboarding = () => {
                     onClick={() => toggleMulti(g.value, goals, setGoals)}
                     className={`w-full text-left px-5 py-4 rounded-xl border font-body transition-all duration-200 ${
                       goals.includes(g.value)
-                        ? "border-primary bg-primary/8 text-primary font-medium"
+                        ? "border-primary bg-primary/10 text-primary font-medium"
                         : "border-border bg-card text-foreground hover:border-primary/40"
                     }`}
                   >

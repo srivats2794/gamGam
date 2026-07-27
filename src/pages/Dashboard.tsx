@@ -5,6 +5,7 @@ import { getProfile } from "@/services/user.service";
 import { getPendingCheckin } from "@/services/checkin.service";
 import { UserProfile } from "@/types/user";
 import { Checkin } from "@/types/checkin";
+import PageHeader from "@/components/PageHeader";
 
 const checkinRemedyLabel: Record<string, string> = {
   "rec-001": "sage tea for your hot flashes",
@@ -29,12 +30,13 @@ const Dashboard = () => {
   const grammieGreeting = "Your body has been through a lot. Let's see what might help today.";
 
   const checkinMessage = checkin?.type === "symptom"
-    ? `A few days ago I suggested ${checkinRemedyLabel[checkin.referenceId] ?? "a remedy"}. I've been wondering — did it help at all?`
+    ? `A few days ago I suggested ${checkinRemedyLabel[checkin.referenceId] ?? "a remedy"}. Did it help at all?`
     : "It's been a few weeks. How is your ritual sitting with you?";
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-6 py-10 flex flex-col gap-6">
+        <PageHeader showLogo />
 
         {/* Greeting */}
         <motion.div
